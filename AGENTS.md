@@ -6,7 +6,7 @@
 
 ## 概览
 
-小米运动 / Zepp Life 自动刷步数 GitHub Actions 项目。Python 3.10 单脚本架构，通过模拟华米 / Zepp APP 协议提交伪造步数，配合 cron 随机化规避检测，结果通过 pushplus / 企业微信 / Telegram 多渠道推送。
+小米运动 / Zepp Life 自动刷步数 GitHub Actions 项目。Python 3.10 单脚本架构，通过模拟华米 / Zepp APP 协议提交伪造步数，配合 cron 随机化规避检测，结果通过 pushplus / 企业微信 / Telegram / 钉钉 多渠道推送。
 
 ## 目录结构
 
@@ -34,7 +34,7 @@ mimotion/
 | 改登录/刷步逻辑 | `main.py::MiMotionRunner` | 三层 token 缓存降级链 |
 | 改华米 API 协议 | `util/zepp_helper.py` | 4 个端点：login/grant/check/post |
 | 改加密方式 | `util/aes_help.py` | AES-128-CBC + PKCS7 |
-| 改推送渠道 | `util/push_util.py` | pushplus / 企业微信 / Telegram |
+| 改推送渠道 | `util/push_util.py` | pushplus / 企业微信 / Telegram / 钉钉 |
 | 改 cron 随机化 | `cron_convert.sh` + `.github/workflows/cron.yml` | bash 跨平台 |
 | 配置提取工作流 | `inspect_configs.py` + `.github/workflows/inspect_configs.yml` | 单独触发 |
 | 部署/Secrets | `README.md` | 完整用户文档 |
@@ -56,7 +56,7 @@ mimotion/
 | `post_fake_brand_data` | func | `util/zepp_helper.py` | POST band_data.json 提交伪步数 |
 | `encrypt_data` / `decrypt_data` | func | `util/aes_help.py` | AES-128-CBC + 随机/固定 IV |
 | `PushConfig` | class | `util/push_util.py` | 推送配置 dataclass |
-| `push_results` | func | `util/push_util.py` | 多渠道分发（pushplus/企微/TG） |
+| `push_results` | func | `util/push_util.py` | 多渠道分发（pushplus/企微/TG/钉钉） |
 | `not_in_push_time_range` | func | `util/push_util.py` | 读 cron_change_time 判定真实执行小时 |
 | `inspect_hours` / `convert_utc_to_shanghai` / `persist_execute_log` | func | `cron_convert.sh` | cron 解析/转换/日志写入 |
 
@@ -64,7 +64,7 @@ mimotion/
 
 ### 配置（CONFIG env，JSON 数组）
 
-`CONFIG` 是 JSON **数组**，每个元素是一个账号的完整配置对象。单账号也必须用数组包裹（`[{...}]`）。每账号字段：`USER`/`PWD`/`MIN_STEP`（默认 18000）/`MAX_STEP`（默认 25000）/`PUSH_PLUS_TOKEN`/`PUSH_PLUS_HOUR`/`PUSH_PLUS_MAX`（默认 30）/`PUSH_WECHAT_WEBHOOK_KEY`/`TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`/`SLEEP_GAP`（默认 5 秒）/`USE_CONCURRENT`（字符串 `'True'` 启用并发，默认 False）。
+`CONFIG` 是 JSON **数组**，每个元素是一个账号的完整配置对象。单账号也必须用数组包裹（`[{...}]`）。每账号字段：`USER`/`PWD`/`MIN_STEP`（默认 18000）/`MAX_STEP`（默认 25000）/`PUSH_PLUS_TOKEN`/`PUSH_PLUS_HOUR`/`PUSH_PLUS_MAX`（默认 30）/`PUSH_WECHAT_WEBHOOK_KEY`/`TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`/`DINGTALK_WEBHOOK`/`SLEEP_GAP`（默认 5 秒）/`USE_CONCURRENT`（字符串 `'True'` 启用并发，默认 False）。
 
 **全局参数取第一个账号**：`SLEEP_GAP` / `USE_CONCURRENT` / `PUSH_PLUS_MAX` 以及所有推送字段（`PUSH_*`）每个账号可独立配置，但运行时只取 `accounts[0]` 的值。建议推送配置只填在数组第一项。
 
@@ -154,5 +154,5 @@ python3 local/decrypt_data.py
 - **token 失效诊断**：看 main.py 日志的"放弃xxx 换取新token"链路，按降级链顺序排查。
 - **429 限流**：同账号高频刷新或同 IP 多账号会触发；调大 SLEEP_GAP 或减少账号。
 - **cron 不触发**：检查 `cron_change_time` 文件是否被 fork sync 覆盖、GitHub Variables CRON_HOURS 格式。
-- **推送不到**：分别核查 pushplus token / 企微 webhook key / TG bot token+chat_id；`not_in_push_time_range` 可能因 cron_change_time 缺失而误判。
+- **推送不到**：分别核查 pushplus token / 企微 webhook key / TG bot token+chat_id / 钉钉 webhook；`not_in_push_time_range` 可能因 cron_change_time 缺失而误判。
 - **改协议端点**：所有 URL 集中在 `util/zepp_helper.py` 顶部函数体内，User-Agent 也在该文件。

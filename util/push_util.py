@@ -25,13 +25,15 @@ class PushConfig:
                  push_plus_max=30,
                  push_wechat_webhook_key=None,
                  telegram_bot_token=None,
-                 telegram_chat_id=None):
+                 telegram_chat_id=None,
+                 dingtalk_webhook=None):
         self.push_plus_token = push_plus_token
         self.push_plus_hour = push_plus_hour
         self.push_plus_max = int(push_plus_max) if push_plus_max else 30
         self.push_wechat_webhook_key = push_wechat_webhook_key
         self.telegram_bot_token = telegram_bot_token
         self.telegram_chat_id = telegram_chat_id
+        self.dingtalk_webhook = dingtalk_webhook
 
 
 def push_plus(token, title, content):
@@ -135,6 +137,30 @@ def push_telegram_bot(bot_token, chat_id, content):
         print(f"telegram bot推送发生未知异常: {e}")
 
 
+def push_dingtalk(webhook, title, content):
+    payload = {
+        "msgtype": "markdown",
+        "markdown": {
+            "title": title,
+            "text": content
+        }
+    }
+    try:
+        response = requests.post(webhook, json=payload)
+        if response.status_code == 200:
+            json_res = response.json()
+            if json_res.get('errcode') == 0:
+                print(f"钉钉推送完毕：{json_res['errmsg']}")
+            else:
+                print(f"钉钉推送失败：{json_res.get('errmsg', '未知错误')}")
+        else:
+            print(f"钉钉推送失败：{response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"钉钉推送异常: {e}")
+    except Exception as e:
+        print(f"钉钉推送发生未知异常: {e}")
+
+
 def push_results(exec_results, summary, config: PushConfig):
     """推送所有结果"""
     if not_in_push_time_range(config):
@@ -142,6 +168,7 @@ def push_results(exec_results, summary, config: PushConfig):
     push_to_push_plus(exec_results, summary, config)
     push_to_wechat_webhook(exec_results, summary, config)
     push_to_telegram_bot(exec_results, summary, config)
+    push_to_dingtalk(exec_results, summary, config)
 
 
 def not_in_push_time_range(config: PushConfig) -> bool:
@@ -239,3 +266,20 @@ def push_to_telegram_bot(exec_results, summary, config: PushConfig):
         push_telegram_bot(config.telegram_bot_token, config.telegram_chat_id, html)
     else:
         print("未配置 TELEGRAM_BOT_TOKEN 或 TELEGRAM_CHAT_ID 跳过telegram推送")
+
+
+def push_to_dingtalk(exec_results, summary, config: PushConfig):
+    if config.dingtalk_webhook and config.dingtalk_webhook != '' and config.dingtalk_webhook != 'NO':
+        content = f'## {summary}'
+        if len(exec_results) >= config.push_plus_max:
+            content += '\n- 账号数量过多，详细情况请前往github actions中查看'
+        else:
+            for exec_result in exec_results:
+                success = exec_result['success']
+                if success is not None and success is True:
+                    content += f'\n- 账号：{exec_result["user"]}刷步数成功，接口返回：{exec_result["msg"]}'
+                else:
+                    content += f'\n- 账号：{exec_result["user"]}刷步数失败，失败原因：{exec_result["msg"]}'
+        push_dingtalk(config.dingtalk_webhook, f"{format_now()} 刷步数通知", content)
+    else:
+        print("未配置 DINGTALK_WEBHOOK 跳过钉钉推送")

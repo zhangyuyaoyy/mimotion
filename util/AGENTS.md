@@ -8,7 +8,7 @@
 |------|------|----------|
 | `aes_help.py` | AES-128-CBC + PKCS7 + base64（pycryptodome） | `HM_AES_KEY` / `HM_AES_IV`（华米固定，被 zepp_helper 导入） |
 | `zepp_helper.py` | 华米 / Zepp 协议四端点调用 + token 检查 + 提交伪步数 | 伪装 User-Agent |
-| `push_util.py` | pushplus / 企业微信 webhook / Telegram bot 三通道分发 | `PushConfig` dataclass |
+| `push_util.py` | pushplus / 企业微信 webhook / Telegram bot / 钉钉群机器人 四通道分发 | `PushConfig` dataclass |
 
 ## 任务导航
 

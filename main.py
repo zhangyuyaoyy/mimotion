@@ -316,7 +316,8 @@ if __name__ == "__main__":
             push_plus_max=get_int_value_default(first_account, 'PUSH_PLUS_MAX', 30),
             push_wechat_webhook_key=first_account.get('PUSH_WECHAT_WEBHOOK_KEY'),
             telegram_bot_token=first_account.get('TELEGRAM_BOT_TOKEN'),
-            telegram_chat_id=first_account.get('TELEGRAM_CHAT_ID')
+            telegram_chat_id=first_account.get('TELEGRAM_CHAT_ID'),
+            dingtalk_webhook=first_account.get('DINGTALK_WEBHOOK')
         )
         # endregion
         execute()
