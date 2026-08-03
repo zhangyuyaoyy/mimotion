@@ -45,7 +45,7 @@ mimotion/
 | 符号 | 类型 | 位置 | 角色 |
 |------|------|------|------|
 | `MiMotionRunner` | class | `main.py` | 刷步数主流程；持有三层 token 缓存与降级刷新 |
-| `execute` | func | `main.py` | 多账号遍历（# 分割）；串行/并发；调 push_results |
+| `execute` | func | `main.py` | 遍历 `accounts` list（CONFIG JSON 数组）；串行/并发；聚合推送 |
 | `prepare_user_tokens` / `persist_user_tokens` | func | `main.py` | 读写 encrypted_tokens.data（AES 加密） |
 | `get_min_max_by_time` | func | `main.py` | 按北京时间线性插值步数范围（22 点达 MAX） |
 | `desensitize_user_name` | func | `main.py` | 日志脱敏（前3后4） |
@@ -62,9 +62,11 @@ mimotion/
 
 ## 约定
 
-### 配置（CONFIG env，JSON）
+### 配置（CONFIG env，JSON 数组）
 
-`USER`/`PWD`（多账号用 `#` 分割，数量必须匹配）/`MIN_STEP`/`MAX_STEP`/`PUSH_PLUS_TOKEN`/`PUSH_PLUS_HOUR`/`PUSH_PLUS_MAX`（默认 30）/`PUSH_WECHAT_WEBHOOK_KEY`/`TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`/`SLEEP_GAP`（默认 5 秒）/`USE_CONCURRENT`（字符串 `'True'` 启用并发，默认 False）。
+`CONFIG` 是 JSON **数组**，每个元素是一个账号的完整配置对象。单账号也必须用数组包裹（`[{...}]`）。每账号字段：`USER`/`PWD`/`MIN_STEP`（默认 18000）/`MAX_STEP`（默认 25000）/`PUSH_PLUS_TOKEN`/`PUSH_PLUS_HOUR`/`PUSH_PLUS_MAX`（默认 30）/`PUSH_WECHAT_WEBHOOK_KEY`/`TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`/`SLEEP_GAP`（默认 5 秒）/`USE_CONCURRENT`（字符串 `'True'` 启用并发，默认 False）。
+
+**全局参数取第一个账号**：`SLEEP_GAP` / `USE_CONCURRENT` / `PUSH_PLUS_MAX` 以及所有推送字段（`PUSH_*`）每个账号可独立配置，但运行时只取 `accounts[0]` 的值。建议推送配置只填在数组第一项。
 
 ### GitHub Secrets
 
@@ -89,7 +91,7 @@ mimotion/
 
 ### 多账号
 
-`#` 分割；账号/密码数量不匹配 → `exit(1)`；同 IP 多账号可能触发 429。
+通过在 `CONFIG` JSON 数组中追加更多账号对象实现（`[{账号1}, {账号2}, ...]`）。**不再支持 `#` 分割**。同 IP 多账号可能触发 429。
 
 ### 登录降级链
 

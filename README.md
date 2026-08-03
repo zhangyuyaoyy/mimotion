@@ -68,21 +68,25 @@
 - CONFIG的内容：
 
   ```json
-  {
-    "USER": "abcxxx@xx.com",
-    "PWD": "password",
-    "MIN_STEP": "18000",
-    "MAX_STEP": "25000",
-    "PUSH_PLUS_TOKEN": "",
-    "PUSH_PLUS_HOUR": "",
-    "PUSH_PLUS_MAX": "30",
-    "PUSH_WECHAT_WEBHOOK_KEY": "",
-    "TELEGRAM_BOT_TOKEN": "",
-    "TELEGRAM_CHAT_ID": "",
-    "SLEEP_GAP": "5",
-    "USE_CONCURRENT": "False"
-  }
+  [
+    {
+      "USER": "abcxxx@xx.com",
+      "PWD": "password",
+      "MIN_STEP": "18000",
+      "MAX_STEP": "25000",
+      "PUSH_PLUS_TOKEN": "",
+      "PUSH_PLUS_HOUR": "",
+      "PUSH_PLUS_MAX": "30",
+      "PUSH_WECHAT_WEBHOOK_KEY": "",
+      "TELEGRAM_BOT_TOKEN": "",
+      "TELEGRAM_CHAT_ID": "",
+      "SLEEP_GAP": "5",
+      "USE_CONCURRENT": "False"
+    }
+  ]
   ```
+
+  CONFIG 是 **JSON 数组**，每个数组元素是一个账号的完整配置。单账号也必须用数组包裹。多账号只需在数组里追加更多对象，详见步骤三。
 
   | 字段名                     | 格式                                                                                                             |
   |-------------------------|----------------------------------------------------------------------------------------------------------------|
@@ -99,25 +103,41 @@
   | SLEEP_GAP               | 多账号执行间隔，单位秒，如果账号比较多可以设置的短一点，默认为5秒                                                                              |
   | USE_CONCURRENT          | 是否使用多线程，实验性功能，未测试是否有效。账号多的可以试试，将它设置为True即可，启用后 `SLEEP_GAP` 将不再生效                                               |
 
+  > **关于全局字段**：`SLEEP_GAP` / `USE_CONCURRENT` / `PUSH_PLUS_MAX` / `PUSH_*` 等字段每个账号都可以单独配置，但程序运行时会**取第一个账号的字段值**作为本次执行的依据（缺省有默认值兜底）。建议把这些字段填在第一个账号里，其它账号只填 `USER` / `PWD` / `MIN_STEP` / `MAX_STEP` 即可。
+
 ### 三、多账户设置(如用不上请忽略)
 
-- 多账户请用 **#** 分割 然后保存到变量 **USER** 和 **PWD**
+- 多账户通过在 CONFIG 数组中**追加更多账号对象**实现，每个账号独立配置 `USER` / `PWD` / `MIN_STEP` / `MAX_STEP` 等字段
 - 理论上账户数量不受限制，但是实际要看github actions的资源和华米接口是否有限制，pushplus消息内容应该也有最大长度限制，反正具体上限请自行测试
 
 #### 例如
 
-```json
-{
-  "USER": "13800138000#13800138001",
-  "PWD": "abc123qwe#abcqwe2",
-  "MIN_STEP": "18000",
-  "MAX_STEP": "25000",
-  "PUSH_PLUS_TOKEN": "",
-  "PUSH_PLUS_HOUR": ""
-}
-```
+  ```json
+  [
+    {
+      "USER": "13800138000",
+      "PWD": "abc123qwe",
+      "MIN_STEP": "18000",
+      "MAX_STEP": "25000",
+      "PUSH_PLUS_TOKEN": "",
+      "PUSH_PLUS_HOUR": ""
+    },
+    {
+      "USER": "13800138001",
+      "PWD": "abcqwe2",
+      "MIN_STEP": "18000",
+      "MAX_STEP": "25000",
+      "PUSH_PLUS_TOKEN": "",
+      "PUSH_PLUS_HOUR": ""
+    }
+  ]
+  ```
 
-#### 注意 **#** 分隔的账号和密码数量必须匹配，否则将跳过执行
+#### 推送说明
+
+- 多账号**聚合推送**：所有账号刷完后一次性推送汇总结果（不会每个账号单独发一条）
+- 推送通道（pushplus / 企业微信 / Telegram）使用**第一个账号的 PUSH_\*** 配置，其它账号里的 `PUSH_*` 字段会被忽略
+- 因此多账号时，建议把推送配置只填在数组第一项里，避免歧义
 
 ### 四、自定义启动时间
 
