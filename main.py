@@ -33,6 +33,11 @@ def get_min_max_by_time(hour=None, minute=None):
     return int(time_rate * min_step), int(time_rate * max_step)
 
 
+# 获取北京时间 22:00 对应的最大和最小步数
+def get_min_max():
+    return get_min_max_by_time(hour=22, minute=0)
+
+
 # 虚拟ip地址
 def fake_ip():
     # 随便找的国内IP段：223.64.0.0 - 223.117.255.255
@@ -314,7 +319,7 @@ if __name__ == "__main__":
         if users is None or passwords is None:
             print("未正确配置账号密码，无法执行")
             exit(1)
-        min_step, max_step = get_min_max_by_time()
+        min_step, max_step = get_min_max()
         use_concurrent = config.get('USE_CONCURRENT')
         if use_concurrent is not None and use_concurrent == 'True':
             use_concurrent = True
